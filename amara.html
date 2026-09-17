@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="docTitle">Ammara Banquet - Ultimate Luxury Experience</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #d4af37;
+            --primary-gradient: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+            --bg-dark: #080a0f;
+            --card-bg: rgba(18, 22, 32, 0.95);
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent-glow: rgba(212, 175, 55, 0.35);
+            --danger: #ef4444;
+            --success: #10b981;
+            --ticker-speed: 12s;
+        }
+
+        [data-theme="emerald"] {
+            --primary: #10b981;
+            --primary-gradient: linear-gradient(135deg, #10b981 0%, #047857 100%);
+            --accent-glow: rgba(16, 185, 129, 0.35);
+        }
+
+        [data-theme="rosegold"] {
+            --primary: #f43f5e;
+            --primary-gradient: linear-gradient(135deg, #f43f5e 0%, #be123c 100%);
+            --accent-glow: rgba(244, 63, 94, 0.35);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; transition: background 0.25s, color 0.25s, border-color 0.25s; }
+        body { background-color: var(--bg-dark); color: var(--text-main); overflow-x: hidden; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Toast Notifications */
+        #toastContainer { position: fixed; top: 80px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { background: var(--card-bg); border-left: 4px solid var(--primary); color: #fff; padding: 14px 22px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: flex; align-items: center; gap: 12px; animation: slideIn 0.3s forwards; font-weight: 600; }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--danger); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        /* Header */
+        header {
+            display: flex; justify-content: space-between; align-items: center; padding: 15px 5%;
+            background: rgba(8, 10, 15, 0.92); backdrop-filter: blur(15px); position: fixed;
+            width: 100%; top: 0; z-index: 1000; border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); letter-spacing: 1.5px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        
+        .hamburger { font-size: 1.8rem; color: var(--primary); cursor: pointer; transition: transform 0.2s; }
+        .hamburger:hover { transform: scale(1.1); }
+
+        .mobile-menu {
+            display: none; flex-direction: column; position: fixed; top: 70px; right: 0; width: 280px; height: calc(100vh - 70px);
+            background: var(--card-bg); padding: 25px; border-left: 1px solid var(--primary); z-index: 999;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+        }
+        .mobile-menu.open { display: flex; }
+        .mobile-menu a { padding: 14px 0; color: var(--text-main); text-decoration: none; font-weight: 700; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 10px; font-size: 1rem; cursor: pointer; }
+        .mobile-menu a:hover { color: var(--primary); }
+
+        .btn { padding: 10px 20px; border: none; border-radius: 30px; cursor: pointer; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.3s ease; text-decoration: none; }
+        .btn-primary { background: var(--primary-gradient); color: #000; box-shadow: 0 4px 15px var(--accent-glow); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-edit { background: #3b82f6; color: #fff; }
+        .btn-admin { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+
+        .page-view { display: none; padding-top: 95px; flex: 1; }
+        .page-view.active { display: block; }
+
+        .hero { text-align: center; padding: 50px 20px 30px; }
+        .hero h1 { font-size: 3rem; color: var(--primary); margin-bottom: 12px; }
+        .hero p { color: var(--text-sub); font-size: 1.1rem; max-width: 650px; margin: 0 auto 25px; line-height: 1.6; }
+
+        .ticker-container { width: 100%; overflow: hidden; background: rgba(255, 255, 255, 0.02); padding: 16px 0; border-top: 1px solid rgba(255, 255, 255, 0.05); border-bottom: 1px solid rgba(255, 255, 255, 0.05); margin-bottom: 30px; }
+        .ticker-track { display: flex; gap: 20px; width: max-content; animation: scrollLeft var(--ticker-speed) linear infinite; }
+        @keyframes scrollLeft { 0% { transform: translateX(0%); } 100% { transform: translateX(-50%); } }
+
+        .status-box { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; min-width: 260px; text-align: center; }
+        .status-box i { font-size: 1.8rem; color: var(--primary); }
+
+        /* Centered Cards Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; padding: 20px 5%; justify-items: center; }
+        .card { background: var(--card-bg); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); position: relative; width: 100%; max-width: 380px; display: flex; flex-direction: column; text-align: center; }
+        .card img { width: 100%; height: 210px; object-fit: cover; }
+        .card-body { padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
+        .card-body h3 { color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
+
+        /* Contact 2-Top 1-Bottom Grid */
+        .contact-grid { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; max-width: 900px; margin: 0 auto 40px; }
+        .contact-card { background: var(--card-bg); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); padding: 30px 20px; text-align: center; flex: 1 1 calc(45% - 20px); min-width: 280px; max-width: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .contact-card.center-bottom { flex: 0 1 calc(50% - 20px); }
+
+        .form-container { max-width: 750px; margin: 20px auto 50px; background: var(--card-bg); padding: 35px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { margin-bottom: 18px; text-align: left; }
+        .form-group label { display: block; margin-bottom: 6px; color: var(--text-sub); font-size: 0.88rem; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(0,0,0,0.5); color: #fff; outline: none;
+        }
+
+        .anim-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 7, 10, 0.95); backdrop-filter: blur(15px); display: none; justify-content: center; align-items: center; z-index: 3000; }
+        #stage { width: 100%; height: 100%; position: relative; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+        
+        .character-runner { position: absolute; left: -180px; top: 50%; transform: translateY(-50%); font-size: 85px; color: var(--primary); display: flex; align-items: center; gap: 10px; transition: left 2.2s cubic-bezier(0.25, 1, 0.5, 1); }
+        .bag-drop { font-size: 40px; color: #b45309; transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+        .auth-box { background: var(--card-bg); border: 2px solid var(--primary); padding: 35px; border-radius: 24px; width: 90%; max-width: 420px; text-align: center; opacity: 0; transform: scale(0.2) translateY(100px); transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); box-shadow: 0 0 40px var(--accent-glow); position: absolute; display: none; }
+        .auth-box.active { opacity: 1; transform: scale(1) translateY(0); display: block; }
+
+        .auth-tabs { display: flex; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .auth-tab { flex: 1; padding: 10px; cursor: pointer; color: var(--text-sub); font-weight: 600; }
+        .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+
+        /* Admin Popup Modal */
+        .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 4000; }
+        .admin-modal { background: var(--card-bg); border: 1px solid var(--primary); border-radius: 16px; padding: 30px; width: 90%; max-width: 550px; box-shadow: 0 0 30px var(--accent-glow); }
+        .admin-modal h3 { color: var(--primary); margin-bottom: 20px; text-align: center; font-size: 1.4rem; }
+
+        .admin-page-header { background: rgba(255,255,255,0.03); padding: 20px 5%; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .admin-section { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 25px; margin: 0 5% 30px; }
+        .admin-section h3 { color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
+        
+        table { width: 100%; text-align: center; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); text-align: center; }
+        th { color: var(--primary); }
+
+        /* Floating Live Widget */
+        .floating-wa { position: fixed; bottom: 25px; right: 25px; background: #25d366; color: #fff; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 10px 25px rgba(37,211,102,0.4); z-index: 2000; cursor: pointer; text-decoration: none; transition: transform 0.3s; }
+        .floating-wa:hover { transform: scale(1.1); }
+
+        footer { background: #050608; border-top: 1px solid rgba(255,255,255,0.08); padding: 40px 5% 20px; margin-top: auto; color: var(--text-sub); font-size: 0.9rem; text-align: center; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 30px; margin-bottom: 30px; text-align: center; }
+        .footer-grid h4 { color: var(--primary); margin-bottom: 15px; font-size: 1.1rem; }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 2.2rem; }
+            .admin-section { margin: 0 20px 25px; padding: 15px; }
+            .contact-card.center-bottom { flex: 1 1 calc(100% - 20px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toastContainer"></div>
+
+    <!-- Floating Live Chat Icon -->
+    <a href="https://wa.me/923123735457" target="_blank" class="floating-wa" title="Live WhatsApp Chat">
+        <i class="fa-brands fa-whatsapp"></i>
+    </a>
+
+    <!-- Header -->
+    <header>
+        <div class="logo" onclick="switchPage('home')"><i class="fa-solid fa-crown" id="dynIconLogo"></i> <span id="siteLogoTxt">AMMARA BANQUET</span></div>
+        <div class="hamburger" onclick="toggleMobileMenu()"><i class="fa-solid fa-bars"></i></div>
+    </header>
+
+    <!-- Hamburger Navigation Drawer -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a onclick="switchPage('home'); toggleMobileMenu();"><i class="fa-solid fa-house"></i> Home</a>
+        <a onclick="switchPage('halls'); toggleMobileMenu();"><i class="fa-solid fa-building"></i> Halls & Venues</a>
+        <a onclick="switchPage('booking'); toggleMobileMenu();"><i class="fa-solid fa-calendar-check"></i> Reserve Event</a>
+        <a onclick="switchPage('contact'); toggleMobileMenu();"><i class="fa-solid fa-address-book"></i> Contact Us</a>
+        <a onclick="switchPage('adminLogin'); toggleMobileMenu();"><i class="fa-solid fa-user-shield"></i> Admin Panel</a>
+        <div id="userNavSlot">
+            <a onclick="runAvatarLogin(); toggleMobileMenu();" style="color: var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> Login / Register</a>
+        </div>
+    </div>
+
+    <!-- PAGE 1: HOME -->
+    <div id="page-home" class="page-view active">
+        <div class="hero">
+            <h1 id="dynHeroTitle">Ammara Banquet Hall</h1>
+            <p id="dynHeroDesc">Sindh Mirpurkhas's premiere venue for Weddings, Walima receptions, and Corporate Events. Lavish decor and grand spacious ambiance.</p>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-primary" onclick="switchPage('booking')"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
+            </div>
+        </div>
+
+        <div class="ticker-container">
+            <div class="ticker-track" id="homeTickerTrack"></div>
+        </div>
+
+        <h2 style="text-align: center; color: var(--primary); margin: 30px 0 10px;">Featured Venues</h2>
+        <div class="grid" id="homeHallsPreview"></div>
+    </div>
+
+    <!-- PAGE 2: HALLS -->
+    <div id="page-halls" class="page-view">
+        <h2 style="text-align: center; color: var(--primary); margin-bottom: 20px;">All Halls & Event Venues</h2>
+        <div class="grid" id="fullHallsGrid"></div>
+    </div>
+
+    <!-- PAGE 3: BOOKING FORM -->
+    <div id="page-booking" class="page-view">
+        <div class="form-container">
+            <h2 style="color: var(--primary); margin-bottom: 10px;">Reserve Banquet via WhatsApp</h2>
+            <form onsubmit="submitWhatsAppBooking(event)">
+                <div class="form-row">
+                    <div class="form-group"><label>Full Name *</label><input type="text" id="bkName" required placeholder="e.g. M. Tahir"></div>
+                    <div class="form-group"><label>Phone Number *</label><input type="tel" id="bkPhone" required placeholder="03XXXXXXXXX"></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Event Date *</label><input type="date" id="bkDate" required></div>
+                    <div class="form-group"><label>Event Shift *</label><select id="bkTime"><option>Day Shift (1 PM - 4 PM)</option><option>Night Shift (8 PM - 12 AM)</option></select></div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group"><label>Expected Guests *</label><input type="number" id="bkGuests" required placeholder="e.g. 500"></div>
+                    <div class="form-group"><label>Select Hall *</label><select id="bkHallSelect"></select></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Food / Catering Option *</label>
+                        <select id="bkFoodOption">
+                            <option value="Banquet Internal Catering">Banquet Provided Menu & Catering</option>
+                            <option value="Self / External Catering">Bring Own Food (Self Catering)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Stage & Flowers Setup *</label>
+                        <select id="bkStageOption">
+                            <option value="Royal VIP Floral Stage">Royal VIP Floral Stage Decor</option>
+                            <option value="Standard Stage Setup">Standard Banquet Stage</option>
+                            <option value="Custom External Decorator">Custom Decorator Setup</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Sound System & DJ *</label>
+                        <select id="bkSoundOption">
+                            <option value="In-House HD Sound System">In-House Sound & Mic Included</option>
+                            <option value="No Sound Required">No Sound Required</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Special Note / Message</label>
+                        <input type="text" id="bkNotes" placeholder="e.g. Cold drink brand preference...">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; background: #25d366; color:#fff; font-size: 1.1rem; padding: 14px;"><i class="fa-brands fa-whatsapp"></i> Confirm & Send Reserve Request</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAGE 4: CONTACT US (2 Top + 1 Center Bottom Layout) -->
+    <div id="page-contact" class="page-view">
+        <div style="max-width: 900px; margin: 0 auto; padding: 0 20px; text-align: center;">
+            <h2 style="color: var(--primary); margin-bottom: 30px;">Direct Live Contact</h2>
+            
+            <div class="contact-grid">
+                <!-- Top Left -->
+                <div class="contact-card">
+                    <i class="fa-solid fa-phone" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                    <h4>Direct Call</h4>
+                    <p id="dynContactPhone" style="margin: 10px 0;">+92 312 3735457</p>
+                    <a id="btnPhoneLink" href="tel:03123735457" class="btn btn-primary" style="margin-top: 10px;">Call Now</a>
+                </div>
+
+                <!-- Top Right -->
+                <div class="contact-card">
+                    <i class="fa-brands fa-whatsapp" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                    <h4>WhatsApp Chat</h4>
+                    <p id="dynContactWa" style="margin: 10px 0;">03123735457</p>
+                    <a id="btnWaLink" href="https://wa.me/923123735457" target="_blank" class="btn btn-primary" style="margin-top: 10px; background: #25d366; color: #fff;">Chat WhatsApp</a>
+                </div>
+
+                <!-- Bottom Center -->
+                <div class="contact-card center-bottom">
+                    <i class="fa-solid fa-envelope" style="font-size: 2.5rem; color: var(--primary); margin-bottom: 15px;"></i>
+                    <h4>Email Support</h4>
+                    <p id="dynContactEmail" style="margin: 10px 0;">lagharitahir08@gmail.com</p>
+                    <a id="btnEmailLink" href="mailto:lagharitahir08@gmail.com" class="btn btn-primary" style="margin-top: 10px;">Send Email</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PAGE 5: ADMIN LOGIN -->
+    <div id="page-adminLogin" class="page-view">
+        <div class="form-container" style="max-width: 420px;">
+            <i class="fa-solid fa-user-shield" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+            <h2 style="color: var(--primary); margin-bottom: 20px;">Master Admin Portal</h2>
+            <form onsubmit="verifyAdminPass(event)">
+                <div class="form-group">
+                    <label>Admin Access Password</label>
+                    <input type="password" id="admPassInput" required placeholder="Default Password: 123">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Unlock Admin Dashboard</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- PAGE 6: ADMIN DASHBOARD -->
+    <div id="page-adminDashboard" class="page-view">
+        <div class="admin-page-header">
+            <h2 style="color: var(--primary);"><i class="fa-solid fa-sliders"></i> Admin Control Panel</h2>
+            <button class="btn btn-danger" onclick="switchPage('home'); showToast('Admin Logged Out', 'error');"><i class="fa-solid fa-right-from-bracket"></i> Exit Admin</button>
+        </div>
+
+        <div class="admin-section">
+            <h3><i class="fa-solid fa-gears"></i> Website Branding & Theme Customizer</h3>
+            
+            <div class="form-group" style="background: rgba(212,175,55,0.08); padding: 15px; border-radius: 12px; border: 1px solid var(--primary); margin-bottom: 20px;">
+                <label style="color: var(--primary); font-weight: bold;"><i class="fa-solid fa-palette"></i> Active Theme Selector</label>
+                <select class="theme-selector" onchange="setTheme(this.value)" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 8px;">
+                    <option value="default">★ Gold Luxe (Default)</option>
+                    <option value="emerald">★ Royal Emerald</option>
+                    <option value="rosegold">★ Rose Gold</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group"><label>Website Name / Logo</label><input type="text" id="admSiteName"></div>
+                <div class="form-group"><label>Logo Icon Class</label><input type="text" id="admLogoIcon"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Hero Main Title</label><input type="text" id="admHeroTitle"></div>
+                <div class="form-group"><label>Hero Description</label><input type="text" id="admHeroDesc"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label>Contact Phone</label><input type="text" id="admPhone"></div>
+                <div class="form-group"><label>Contact Email</label><input type="text" id="admEmail"></div>
+            </div>
+            <div class="form-group">
+                <label>Ticker Speed (Seconds: <span id="speedValTxt">12s</span>)</label>
+                <input type="range" id="admTickerSpeed" min="3" max="30" value="12" oninput="document.getElementById('speedValTxt').innerText=this.value+'s';">
+            </div>
+            <div class="form-group"><label>Admin Password</label><input type="text" id="admMasterPass"></div>
+            <button class="btn btn-primary" onclick="saveGeneralSettings()"><i class="fa-solid fa-floppy-disk"></i> Save Global Settings</button>
+        </div>
+
+        <div class="admin-section">
+            <h3><span><i class="fa-solid fa-building-flag"></i> Manage Halls (Add, Edit & Delete)</span> <button class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openHallModal()"><i class="fa-solid fa-plus"></i> Add New Hall</button></h3>
+            <div id="adminHallsTable"></div>
+        </div>
+
+        <div class="admin-section">
+            <h3><span><i class="fa-solid fa-chart-line"></i> Manage Home Ticker (Add, Edit & Delete)</span> <button class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem;" onclick="openTickerModal()"><i class="fa-solid fa-plus"></i> Add Stat Item</button></h3>
+            <div id="adminTickerTable"></div>
+        </div>
+    </div>
+
+    <!-- AVATAR LOGIN / REGISTER MODAL -->
+    <div class="anim-overlay" id="animOverlay">
+        <div id="stage">
+            <div class="character-runner" id="runnerChar">
+                <i class="fa-solid fa-person-running"></i>
+                <div class="bag-drop" id="runnerBag"><i class="fa-solid fa-briefcase"></i></div>
+            </div>
+
+            <div class="auth-box" id="authBox">
+                <span style="position: absolute; right: 20px; top: 15px; cursor: pointer; color: var(--text-sub);" onclick="closeAuthModal()">&times;</span>
+                <div class="auth-tabs">
+                    <div class="auth-tab active" id="tabLoginBtn" onclick="switchAuthMode('login')">Login</div>
+                    <div class="auth-tab" id="tabRegBtn" onclick="switchAuthMode('reg')">Register</div>
+                </div>
+
+                <form id="viewLogin" onsubmit="handleLoginSubmit(event)">
+                    <div class="form-group"><label>Email / Username *</label><input type="text" id="loginUser" required placeholder="Enter username"></div>
+                    <div class="form-group"><label>Password *</label><input type="password" id="loginPass" required placeholder="••••••••"></div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+                </form>
+
+                <form id="viewReg" style="display: none;" onsubmit="handleRegisterSubmit(event)">
+                    <div class="form-group"><label>Full Name *</label><input type="text" id="regName" required placeholder="M. Tahir"></div>
+                    <div class="form-group"><label>Email Address *</label><input type="email" id="regEmail" required placeholder="tahir@gmail.com"></div>
+                    <div class="form-group"><label>Phone Number *</label><input type="tel" id="regPhone" required placeholder="03123735457"></div>
+                    <div class="form-group"><label>Password *</label><input type="password" id="regPass" required placeholder="••••••••"></div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-user-plus"></i> Register Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN POPUP MODAL FOR HALLS -->
+    <div class="admin-modal-overlay" id="hallModalOverlay">
+        <div class="admin-modal">
+            <h3 id="hallModalTitle">Hall Configuration</h3>
+            <input type="hidden" id="editHallIdx">
+            <div class="form-group">
+                <label>Hall Name *</label>
+                <input type="text" id="mHallName" required placeholder="e.g. Imperial Ballroom">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Price (PKR) *</label>
+                    <input type="text" id="mHallPrice" required placeholder="250,000">
+                </div>
+                <div class="form-group">
+                    <label>Capacity *</label>
+                    <input type="text" id="mHallCap" required placeholder="500-1000">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Hall Cover Image Option</label>
+                <input type="file" id="mHallFile" accept="image/*" onchange="previewGalleryImage(event)" style="margin-bottom: 8px;">
+                <input type="text" id="mHallImg" placeholder="Or paste direct image Web URL">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="closeAdminModals()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveHallFromModal()"><i class="fa-solid fa-check"></i> Save Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN POPUP MODAL FOR TICKER STATS -->
+    <div class="admin-modal-overlay" id="tickerModalOverlay">
+        <div class="admin-modal">
+            <h3 id="tickerModalTitle">Ticker Stat Details</h3>
+            <input type="hidden" id="editTickerIdx">
+            <div class="form-group">
+                <label>Stat Title *</label>
+                <input type="text" id="mTickTitle" required placeholder="e.g. Guest Rating">
+            </div>
+            <div class="form-group">
+                <label>Stat Value / Message *</label>
+                <input type="text" id="mTickText" required placeholder="e.g. 4.9 Stars">
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button class="btn btn-danger" onclick="closeAdminModals()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveTickerFromModal()"><i class="fa-solid fa-check"></i> Save Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-grid">
+            <div>
+                <h4 id="footLogo">Ammara Banquet</h4>
+                <p>Mirpurkhas's premiere venue for luxury receptions & event management.</p>
+            </div>
+            <div>
+                <h4>Quick Links</h4>
+                <p><a onclick="switchPage('home')" style="color: var(--text-sub); cursor: pointer;">Home</a></p>
+                <p><a onclick="switchPage('halls')" style="color: var(--text-sub); cursor: pointer;">Halls</a></p>
+                <p><a onclick="switchPage('booking')" style="color: var(--text-sub); cursor: pointer;">Reserve Event</a></p>
+            </div>
+            <div>
+                <h4>Contact</h4>
+                <p><i class="fa-solid fa-phone"></i> <span id="footPhone">03123735457</span></p>
+                <p><i class="fa-solid fa-envelope"></i> <span id="footEmail">lagharitahir08@gmail.com</span></p>
+            </div>
+        </div>
+        <div style="border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+            &copy; 2026 Ammara Banquet. All Rights Reserved. Managed by Tahir Maher.
+        </div>
+    </footer>
+
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('ammara_user')) || null;
+        let adminPass = "123";
+
+        let siteConfig = {
+            name: "AMMARA BANQUET",
+            icon: "fa-solid fa-crown",
+            heroTitle: "Ammara Banquet Hall",
+            heroDesc: "Sindh Mirpurkhas's premiere venue for Weddings, Walima receptions, and Corporate Events.",
+            phone: "03123735457",
+            email: "lagharitahir08@gmail.com",
+            tickerSpeed: "12s"
+        };
+
+        let hallsData = [
+            { id: 1, name: "Grand Imperial Ballroom", price: "250,000", cap: "1000-2000", icon: "fa-crown", img: "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80" },
+            { id: 2, name: "Royal Crystal Hall", price: "180,000", cap: "500-1000", icon: "fa-gem", img: "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80" }
+        ];
+
+        let tickerData = [
+            { id: 1, title: "Season Status", text: "Bookings Open 2026", icon: "fa-champagne-glasses" },
+            { id: 2, title: "Hall Capacity", text: "Up to 2,500 Guests", icon: "fa-users" },
+            { id: 3, title: "Special Offer", text: "15% Mid-Week Discount", icon: "fa-bolt" },
+            { id: 4, title: "Guest Rating", text: "4.9 / 5.0 Star Rated", icon: "fa-star" }
+        ];
+
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-triangle-exclamation'}"></i> ${msg}`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function switchPage(p) {
+            document.querySelectorAll('.page-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('page-' + p).classList.add('active');
+            window.scrollTo(0,0);
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('open');
+        }
+
+        function setTheme(t) {
+            if(t === 'default') document.documentElement.removeAttribute('data-theme');
+            else document.documentElement.setAttribute('data-theme', t);
+            showToast(`Theme changed to ${t.toUpperCase()}`);
+        }
+
+        function updateUserUI() {
+            const slot = document.getElementById('userNavSlot');
+            if(currentUser) {
+                slot.innerHTML = `
+                    <a style="color: var(--primary);"><i class="fa-solid fa-user-check"></i> ${currentUser.name}</a>
+                    <a onclick="logoutUser(); toggleMobileMenu();" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout Account</a>
+                `;
+                document.getElementById('bkName').value = currentUser.name;
+                document.getElementById('bkPhone').value = currentUser.phone || '';
+            } else {
+                slot.innerHTML = `
+                    <a onclick="runAvatarLogin(); toggleMobileMenu();" style="color: var(--primary);"><i class="fa-solid fa-right-to-bracket"></i> Login / Register</a>
+                `;
+            }
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('ammara_user');
+            updateUserUI();
+            showToast('Account Logged Out Successfully');
+        }
+
+        function renderSite() {
+            document.getElementById('siteLogoTxt').innerText = siteConfig.name;
+            document.getElementById('footLogo').innerText = siteConfig.name;
+            document.getElementById('dynHeroTitle').innerText = siteConfig.heroTitle;
+            document.getElementById('dynHeroDesc').innerText = siteConfig.heroDesc;
+            document.getElementById('dynContactPhone').innerText = siteConfig.phone;
+            document.getElementById('dynContactWa').innerText = siteConfig.phone;
+            document.getElementById('btnPhoneLink').href = "tel:" + siteConfig.phone;
+            document.getElementById('btnWaLink').href = "https://wa.me/92" + siteConfig.phone.replace(/^0/, '');
+            document.getElementById('dynContactEmail').innerText = siteConfig.email;
+            document.getElementById('btnEmailLink').href = "mailto:" + siteConfig.email;
+            document.getElementById('footPhone').innerText = siteConfig.phone;
+            document.getElementById('footEmail').innerText = siteConfig.email;
+
+            document.documentElement.style.setProperty('--ticker-speed', siteConfig.tickerSpeed);
+
+            // Render Ticker
+            const track = document.getElementById('homeTickerTrack');
+            let tickerHTML = '';
+            [...tickerData, ...tickerData].forEach(t => {
+                tickerHTML += `<div class="status-box"><i class="fa-solid ${t.icon}"></i><div><h4>${t.title}</h4><p>${t.text}</p></div></div>`;
+            });
+            track.innerHTML = tickerHTML;
+
+            // Render Halls Centered
+            const bkSelect = document.getElementById('bkHallSelect');
+            bkSelect.innerHTML = '';
+            let hallsHTML = '';
+            hallsData.forEach(h => {
+                bkSelect.innerHTML += `<option>${h.name}</option>`;
+                hallsHTML += `
+                    <div class="card">
+                        <img src="${h.img}" alt="${h.name}">
+                        <div class="card-body">
+                            <h3><i class="fa-solid ${h.icon}"></i> ${h.name}</h3>
+                            <p style="color: var(--text-sub); font-size: 0.9rem;">Capacity: ${h.cap} Guests. VIP Setup.</p>
+                            <div style="font-size: 1.3rem; font-weight: bold; margin: 10px 0; color: var(--primary);">PKR ${h.price}</div>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="switchPage('booking')"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('homeHallsPreview').innerHTML = hallsHTML;
+            document.getElementById('fullHallsGrid').innerHTML = hallsHTML;
+
+            updateUserUI();
+            renderAdminTables();
+        }
+
+        /* ADMIN FUNCTIONS */
+        function verifyAdminPass(e) {
+            e.preventDefault();
+            if(document.getElementById('admPassInput').value === adminPass) {
+                showToast('Admin Control Unlocked');
+                document.getElementById('admSiteName').value = siteConfig.name;
+                document.getElementById('admLogoIcon').value = siteConfig.icon;
+                document.getElementById('admHeroTitle').value = siteConfig.heroTitle;
+                document.getElementById('admHeroDesc').value = siteConfig.heroDesc;
+                document.getElementById('admPhone').value = siteConfig.phone;
+                document.getElementById('admEmail').value = siteConfig.email;
+                document.getElementById('admTickerSpeed').value = parseInt(siteConfig.tickerSpeed);
+                document.getElementById('admMasterPass').value = adminPass;
+                switchPage('adminDashboard');
+            } else {
+                showToast('Incorrect Password!', 'error');
+            }
+        }
+
+        function saveGeneralSettings() {
+            siteConfig.name = document.getElementById('admSiteName').value;
+            siteConfig.icon = document.getElementById('admLogoIcon').value;
+            siteConfig.heroTitle = document.getElementById('admHeroTitle').value;
+            siteConfig.heroDesc = document.getElementById('admHeroDesc').value;
+            siteConfig.phone = document.getElementById('admPhone').value;
+            siteConfig.email = document.getElementById('admEmail').value;
+            siteConfig.tickerSpeed = document.getElementById('admTickerSpeed').value + 's';
+            adminPass = document.getElementById('admMasterPass').value;
+
+            renderSite();
+            showToast('Branding Settings Saved');
+        }
+
+        function renderAdminTables() {
+            let hallTable = `<table><tr><th>Cover</th><th>Name</th><th>Price</th><th>Capacity</th><th>Actions</th></tr>`;
+            hallsData.forEach((h, idx) => {
+                hallTable += `<tr>
+                    <td><img src="${h.img}" style="width:45px; height:35px; border-radius:6px; object-fit:cover;"></td>
+                    <td>${h.name}</td>
+                    <td>PKR ${h.price}</td>
+                    <td>${h.cap}</td>
+                    <td>
+                        <button class="btn btn-edit" style="padding: 4px 10px; font-size: 0.75rem;" onclick="editHallModal(${idx})"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteHall(${idx})"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </td>
+                </tr>`;
+            });
+            hallTable += `</table>`;
+            document.getElementById('adminHallsTable').innerHTML = hallTable;
+
+            let tickTable = `<table><tr><th>Icon</th><th>Title</th><th>Value Text</th><th>Actions</th></tr>`;
+            tickerData.forEach((t, idx) => {
+                tickTable += `<tr>
+                    <td><i class="fa-solid ${t.icon}"></i></td>
+                    <td>${t.title}</td>
+                    <td>${t.text}</td>
+                    <td>
+                        <button class="btn btn-edit" style="padding: 4px 10px; font-size: 0.75rem;" onclick="editTickerModal(${idx})"><i class="fa-solid fa-pen"></i> Edit</button>
+                        <button class="btn btn-danger" style="padding: 4px 10px; font-size: 0.75rem;" onclick="deleteTicker(${idx})"><i class="fa-solid fa-trash"></i> Delete</button>
+                    </td>
+                </tr>`;
+            });
+            tickTable += `</table>`;
+            document.getElementById('adminTickerTable').innerHTML = tickTable;
+        }
+
+        function openHallModal() {
+            document.getElementById('editHallIdx').value = "-1";
+            document.getElementById('hallModalTitle').innerText = "Add New Banquet Hall";
+            document.getElementById('mHallName').value = "";
+            document.getElementById('mHallPrice').value = "";
+            document.getElementById('mHallCap').value = "";
+            document.getElementById('mHallImg').value = "";
+            document.getElementById('hallModalOverlay').style.display = 'flex';
+        }
+
+        function editHallModal(idx) {
+            const h = hallsData[idx];
+            document.getElementById('editHallIdx').value = idx;
+            document.getElementById('hallModalTitle').innerText = "Edit Hall Details";
+            document.getElementById('mHallName').value = h.name;
+            document.getElementById('mHallPrice').value = h.price;
+            document.getElementById('mHallCap').value = h.cap;
+            document.getElementById('mHallImg').value = h.img;
+            document.getElementById('hallModalOverlay').style.display = 'flex';
+        }
+
+        function previewGalleryImage(e) {
+            const file = e.target.files[0];
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    document.getElementById('mHallImg').value = evt.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveHallFromModal() {
+            const idx = parseInt(document.getElementById('editHallIdx').value);
+            const name = document.getElementById('mHallName').value;
+            const price = document.getElementById('mHallPrice').value;
+            const cap = document.getElementById('mHallCap').value;
+            let img = document.getElementById('mHallImg').value || "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=800&q=80";
+
+            if(!name || !price) {
+                showToast('Please fill all required fields', 'error');
+                return;
+            }
+
+            if(idx >= 0) {
+                hallsData[idx] = { ...hallsData[idx], name, price, cap, img };
+                showToast('Hall Updated Successfully');
+            } else {
+                hallsData.push({ id: Date.now(), name, price, cap: cap || "500+", icon: "fa-building", img });
+                showToast('New Hall Added');
+            }
+            closeAdminModals();
+            renderSite();
+        }
+
+        function deleteHall(index) {
+            if(confirm("Are you sure you want to delete this hall?")) {
+                hallsData.splice(index, 1);
+                renderSite();
+                showToast('Hall Deleted', 'error');
+            }
+        }
+
+        function openTickerModal() {
+            document.getElementById('editTickerIdx').value = "-1";
+            document.getElementById('tickerModalTitle').innerText = "Add New Ticker Item";
+            document.getElementById('mTickTitle').value = "";
+            document.getElementById('mTickText').value = "";
+            document.getElementById('tickerModalOverlay').style.display = 'flex';
+        }
+
+        function editTickerModal(idx) {
+            const t = tickerData[idx];
+            document.getElementById('editTickerIdx').value = idx;
+            document.getElementById('tickerModalTitle').innerText = "Edit Ticker Stat";
+            document.getElementById('mTickTitle').value = t.title;
+            document.getElementById('mTickText').value = t.text;
+            document.getElementById('tickerModalOverlay').style.display = 'flex';
+        }
+
+        function saveTickerFromModal() {
+            const idx = parseInt(document.getElementById('editTickerIdx').value);
+            const title = document.getElementById('mTickTitle').value;
+            const text = document.getElementById('mTickText').value;
+
+            if(!title || !text) {
+                showToast('Please fill all required fields', 'error');
+                return;
+            }
+
+            if(idx >= 0) {
+                tickerData[idx].title = title;
+                tickerData[idx].text = text;
+                showToast('Ticker Stat Updated');
+            } else {
+                tickerData.push({ id: Date.now(), title, text, icon: "fa-chart-pie" });
+                showToast('New Stat Item Added');
+            }
+            closeAdminModals();
+            renderSite();
+        }
+
+        function deleteTicker(index) {
+            if(confirm("Are you sure you want to delete this item?")) {
+                tickerData.splice(index, 1);
+                renderSite();
+                showToast('Stat Item Deleted', 'error');
+            }
+        }
+
+        function closeAdminModals() {
+            document.getElementById('hallModalOverlay').style.display = 'none';
+            document.getElementById('tickerModalOverlay').style.display = 'none';
+        }
+
+        /* AUTH HANDLERS */
+        function runAvatarLogin() {
+            const overlay = document.getElementById('animOverlay');
+            const runner = document.getElementById('runnerChar');
+            const bag = document.getElementById('runnerBag');
+            const authBox = document.getElementById('authBox');
+
+            overlay.style.display = 'flex';
+            runner.style.left = '-180px';
+            bag.style.transform = 'translate(0, 0)';
+            authBox.classList.remove('active');
+            authBox.style.display = 'none';
+
+            setTimeout(() => { runner.style.left = 'calc(50% - 50px)'; }, 50);
+            setTimeout(() => { bag.style.transform = 'translate(-40px, 80px) rotate(45deg)'; }, 2100);
+            setTimeout(() => { runner.style.left = '110vw'; }, 2800);
+            setTimeout(() => {
+                authBox.style.display = 'block';
+                setTimeout(() => authBox.classList.add('active'), 50);
+            }, 3200);
+        }
+
+        function closeAuthModal() { document.getElementById('animOverlay').style.display = 'none'; }
+
+        function switchAuthMode(mode) {
+            if(mode === 'login') {
+                document.getElementById('viewLogin').style.display = 'block';
+                document.getElementById('viewReg').style.display = 'none';
+                document.getElementById('tabLoginBtn').classList.add('active');
+                document.getElementById('tabRegBtn').classList.remove('active');
+            } else {
+                document.getElementById('viewLogin').style.display = 'none';
+                document.getElementById('viewReg').style.display = 'block';
+                document.getElementById('tabRegBtn').classList.add('active');
+                document.getElementById('tabLoginBtn').classList.remove('active');
+            }
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUser').value;
+            currentUser = { name: u, phone: "" };
+            localStorage.setItem('ammara_user', JSON.stringify(currentUser));
+            updateUserUI();
+            showToast(`Welcome Back, ${u}!`);
+            closeAuthModal();
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+            const name = document.getElementById('regName').value;
+            const phone = document.getElementById('regPhone').value;
+            currentUser = { name, phone };
+            localStorage.setItem('ammara_user', JSON.stringify(currentUser));
+            updateUserUI();
+            showToast(`Registration Successful! Welcome ${name}`);
+            closeAuthModal();
+        }
+
+        function submitWhatsAppBooking(e) {
+            e.preventDefault();
+            const name = document.getElementById('bkName').value;
+            const phone = document.getElementById('bkPhone').value;
+            const date = document.getElementById('bkDate').value;
+            const time = document.getElementById('bkTime').value;
+            const guests = document.getElementById('bkGuests').value;
+            const hall = document.getElementById('bkHallSelect').value;
+            const food = document.getElementById('bkFoodOption').value;
+            const stage = document.getElementById('bkStageOption').value;
+            const sound = document.getElementById('bkSoundOption').value;
+            const note = document.getElementById('bkNotes').value;
+
+            const txt = `*AMMARA BANQUET BOOKING REQUEST*%0A%0A*Name:* ${name}%0A*Phone:* ${phone}%0A*Date:* ${date}%0A*Shift:* ${time}%0A*Guests:* ${guests}%0A*Hall:* ${hall}%0A*Food Option:* ${food}%0A*Stage Decor:* ${stage}%0A*Sound System:* ${sound}%0A*Note:* ${note || 'None'}`;
+            window.open(`https://wa.me/923123735457?text=${txt}`, '_blank');
+        }
+
+        window.onload = function() { renderSite(); };
+    </script>
+</body>
+</html>
