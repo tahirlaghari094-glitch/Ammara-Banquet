@@ -160,7 +160,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <a onclick="switchPage('home'); toggleMobileMenu();"><i class="fa-solid fa-house"></i> Home</a>
         <a onclick="switchPage('halls'); toggleMobileMenu();"><i class="fa-solid fa-building"></i> Halls & Venues</a>
-        <a onclick="switchPage('booking'); toggleMobileMenu();"><i class="fa-solid fa-calendar-check"></i> Reserve Event</a>
+        <a onclick="checkBookingAccess(); toggleMobileMenu();"><i class="fa-solid fa-calendar-check"></i> Reserve Event</a>
         <a onclick="switchPage('contact'); toggleMobileMenu();"><i class="fa-solid fa-address-book"></i> Contact Us</a>
         <a onclick="switchPage('adminLogin'); toggleMobileMenu();"><i class="fa-solid fa-user-shield"></i> Admin Panel</a>
         <div id="userNavSlot">
@@ -174,7 +174,7 @@
             <h1 id="dynHeroTitle">Ammara Banquet Hall</h1>
             <p id="dynHeroDesc">Sindh Mirpurkhas's premiere venue for Weddings, Walima receptions, and Corporate Events.</p>
             <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
-                <button class="btn btn-primary" onclick="switchPage('booking')"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
+                <button class="btn btn-primary" onclick="checkBookingAccess()"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
             </div>
         </div>
 
@@ -432,7 +432,7 @@
                 <h4>Quick Links</h4>
                 <p><a onclick="switchPage('home')" style="color: var(--text-sub); cursor: pointer;">Home</a></p>
                 <p><a onclick="switchPage('halls')" style="color: var(--text-sub); cursor: pointer;">Halls</a></p>
-                <p><a onclick="switchPage('booking')" style="color: var(--text-sub); cursor: pointer;">Reserve Event</a></p>
+                <p><a onclick="checkBookingAccess()" style="color: var(--text-sub); cursor: pointer;">Reserve Event</a></p>
             </div>
             <div>
                 <h4>Contact</h4>
@@ -542,6 +542,15 @@
             window.scrollTo(0,0);
         }
 
+        function checkBookingAccess() {
+            if (!currentUser) {
+                showToast('Please login to reserve a table / venue!', 'error');
+                runAvatarLogin();
+            } else {
+                switchPage('booking');
+            }
+        }
+
         function toggleMobileMenu() {
             document.getElementById('mobileMenu').classList.toggle('open');
         }
@@ -623,7 +632,7 @@
                                 <h3><i class="fa-solid ${h.icon || 'fa-building'}"></i> ${h.name}</h3>
                                 <p style="color: var(--text-sub); font-size: 0.9rem;">Capacity: ${h.cap} Guests. VIP Setup.</p>
                                 <div style="font-size: 1.3rem; font-weight: bold; margin: 10px 0; color: var(--primary);">PKR ${h.price}</div>
-                                <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="switchPage('booking')"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
+                                <button class="btn btn-primary" style="width: 100%; margin-top: 5px;" onclick="checkBookingAccess()"><i class="fa-solid fa-calendar-check"></i> Book Venue</button>
                             </div>
                         </div>
                     `;
@@ -926,6 +935,14 @@
 
         function submitWhatsAppBooking(e) {
             e.preventDefault();
+            
+            // Check if user is logged in
+            if (!currentUser) {
+                showToast('Please login to reserve a table / venue!', 'error');
+                runAvatarLogin();
+                return;
+            }
+
             const name = document.getElementById('bkName').value;
             const phone = document.getElementById('bkPhone').value;
             const date = document.getElementById('bkDate').value;
