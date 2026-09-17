@@ -86,14 +86,12 @@
         .status-box { background: var(--card-bg); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 20px; border-radius: 12px; display: flex; align-items: center; justify-content: center; gap: 15px; min-width: 260px; text-align: center; }
         .status-box i { font-size: 1.8rem; color: var(--primary); }
 
-        /* Centered Cards Grid */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; padding: 20px 5%; justify-items: center; }
         .card { background: var(--card-bg); border-radius: 16px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); position: relative; width: 100%; max-width: 380px; display: flex; flex-direction: column; text-align: center; }
         .card img { width: 100%; height: 210px; object-fit: cover; }
         .card-body { padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; }
         .card-body h3 { color: var(--primary); margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px; text-align: center; }
 
-        /* Contact Grid */
         .contact-grid { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; max-width: 900px; margin: 0 auto 40px; }
         .contact-card { background: var(--card-bg); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); padding: 30px 20px; text-align: center; flex: 1 1 calc(45% - 20px); min-width: 280px; max-width: 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .contact-card.center-bottom { flex: 0 1 calc(50% - 20px); }
@@ -119,7 +117,6 @@
         .auth-tab { flex: 1; padding: 10px; cursor: pointer; color: var(--text-sub); font-weight: 600; }
         .auth-tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
 
-        /* Admin Popup Modal */
         .admin-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px); display: none; justify-content: center; align-items: center; z-index: 4000; }
         .admin-modal { background: var(--card-bg); border: 1px solid var(--primary); border-radius: 16px; padding: 30px; width: 90%; max-width: 550px; box-shadow: 0 0 30px var(--accent-glow); }
         .admin-modal h3 { color: var(--primary); margin-bottom: 20px; text-align: center; font-size: 1.4rem; }
@@ -304,7 +301,7 @@
             
             <div class="form-group" style="background: rgba(212,175,55,0.08); padding: 15px; border-radius: 12px; border: 1px solid var(--primary); margin-bottom: 20px;">
                 <label style="color: var(--primary); font-weight: bold;"><i class="fa-solid fa-palette"></i> Active Theme Selector</label>
-                <select class="theme-selector" onchange="setTheme(this.value)" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 8px;">
+                <select id="admThemeSelect" class="theme-selector" onchange="setTheme(this.value, true)" style="width: 100%; padding: 10px; background: rgba(0,0,0,0.6); color: #fff; border-radius: 8px;">
                     <option value="default">★ Gold Luxe (Default)</option>
                     <option value="emerald">★ Royal Emerald</option>
                     <option value="rosegold">★ Rose Gold</option>
@@ -358,7 +355,7 @@
                 </div>
 
                 <form id="viewLogin" onsubmit="handleLoginSubmit(event)">
-                    <div class="form-group"><label>Email / Username *</label><input type="text" id="loginUser" required placeholder="Enter username"></div>
+                    <div class="form-group"><label>Email / Username *</label><input type="text" id="loginUser" required placeholder="Enter username or email"></div>
                     <div class="form-group"><label>Password *</label><input type="password" id="loginPass" required placeholder="••••••••"></div>
                     <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
                 </form>
@@ -473,7 +470,8 @@
             heroDesc: "Sindh Mirpurkhas's premiere venue for Weddings, Walima receptions, and Corporate Events.",
             phone: "03123735457",
             email: "lagharitahir08@gmail.com",
-            tickerSpeed: "12s"
+            tickerSpeed: "12s",
+            theme: "default"
         };
 
         let hallsData = [
@@ -495,6 +493,7 @@
                 if (val) {
                     siteConfig = val;
                     if(siteConfig.adminPass) adminPass = siteConfig.adminPass;
+                    if(siteConfig.theme) setTheme(siteConfig.theme, false);
                     renderSite();
                 }
             });
@@ -547,10 +546,18 @@
             document.getElementById('mobileMenu').classList.toggle('open');
         }
 
-        function setTheme(t) {
+        function setTheme(t, saveToDb = true) {
+            siteConfig.theme = t;
             if(t === 'default') document.documentElement.removeAttribute('data-theme');
             else document.documentElement.setAttribute('data-theme', t);
-            showToast(`Theme changed to ${t.toUpperCase()}`);
+            
+            const themeSelect = document.getElementById('admThemeSelect');
+            if(themeSelect) themeSelect.value = t;
+
+            if(saveToDb) {
+                syncConfigToFirebase();
+                showToast(`Theme changed to ${t.toUpperCase()} and synced live!`);
+            }
         }
 
         function updateUserUI() {
@@ -643,6 +650,7 @@
                 document.getElementById('admEmail').value = siteConfig.email;
                 document.getElementById('admTickerSpeed').value = parseInt(siteConfig.tickerSpeed);
                 document.getElementById('admMasterPass').value = adminPass;
+                document.getElementById('admThemeSelect').value = siteConfig.theme || 'default';
                 switchPage('adminDashboard');
             } else {
                 showToast('Incorrect Password!', 'error');
@@ -657,6 +665,7 @@
             siteConfig.phone = document.getElementById('admPhone').value;
             siteConfig.email = document.getElementById('admEmail').value;
             siteConfig.tickerSpeed = document.getElementById('admTickerSpeed').value + 's';
+            siteConfig.theme = document.getElementById('admThemeSelect').value;
             adminPass = document.getElementById('admMasterPass').value;
 
             syncConfigToFirebase();
@@ -815,7 +824,7 @@
             document.getElementById('tickerModalOverlay').style.display = 'none';
         }
 
-        /* AUTH HANDLERS */
+        /* AUTH HANDLERS WITH FIREBASE DB VERIFICATION */
         function runAvatarLogin() {
             const overlay = document.getElementById('animOverlay');
             const runner = document.getElementById('runnerChar');
@@ -855,23 +864,64 @@
 
         function handleLoginSubmit(e) {
             e.preventDefault();
-            const u = document.getElementById('loginUser').value;
-            currentUser = { name: u, phone: "" };
-            localStorage.setItem('ammara_user', JSON.stringify(currentUser));
-            updateUserUI();
-            showToast(`Welcome Back, ${u}!`);
-            closeAuthModal();
+            const inputUser = document.getElementById('loginUser').value.trim();
+            const inputPass = document.getElementById('loginPass').value;
+
+            db.ref('registeredUsers').once('value', (snapshot) => {
+                const users = snapshot.val();
+                let foundUser = null;
+
+                if (users) {
+                    Object.keys(users).forEach(key => {
+                        const u = users[key];
+                        if ((u.email && u.email.toLowerCase() === inputUser.toLowerCase()) || 
+                            (u.name && u.name.toLowerCase() === inputUser.toLowerCase())) {
+                            foundUser = u;
+                        }
+                    });
+                }
+
+                if (!foundUser) {
+                    showToast('Account registered nai hai! Pehle Register karein.', 'error');
+                } else if (foundUser.pass !== inputPass) {
+                    showToast('Incorrect Password!', 'error');
+                } else {
+                    currentUser = { name: foundUser.name, phone: foundUser.phone, email: foundUser.email };
+                    localStorage.setItem('ammara_user', JSON.stringify(currentUser));
+                    updateUserUI();
+                    showToast(`Welcome Back, ${foundUser.name}!`);
+                    closeAuthModal();
+                }
+            });
         }
 
         function handleRegisterSubmit(e) {
             e.preventDefault();
-            const name = document.getElementById('regName').value;
-            const phone = document.getElementById('regPhone').value;
-            currentUser = { name, phone };
-            localStorage.setItem('ammara_user', JSON.stringify(currentUser));
-            updateUserUI();
-            showToast(`Registration Successful! Welcome ${name}`);
-            closeAuthModal();
+            const name = document.getElementById('regName').value.trim();
+            const email = document.getElementById('regEmail').value.trim().toLowerCase();
+            const phone = document.getElementById('regPhone').value.trim();
+            const pass = document.getElementById('regPass').value;
+
+            const userKey = email.replace(/[^a-zA-Z0-9]/g, "_");
+
+            db.ref('registeredUsers/' + userKey).once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    showToast('Yeh Email pehle se registered hai! Login karein.', 'error');
+                } else {
+                    const newUser = { name, email, phone, pass, registeredAt: Date.now() };
+                    db.ref('registeredUsers/' + userKey).set(newUser, (error) => {
+                        if (error) {
+                            showToast('Registration failed!', 'error');
+                        } else {
+                            currentUser = { name, phone, email };
+                            localStorage.setItem('ammara_user', JSON.stringify(currentUser));
+                            updateUserUI();
+                            showToast(`Registration Successful! Welcome ${name}`);
+                            closeAuthModal();
+                        }
+                    });
+                }
+            });
         }
 
         function submitWhatsAppBooking(e) {
